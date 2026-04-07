@@ -24,5 +24,6 @@
       "price": 3999,
       "image": "https://via.placeholder.com/300"
     }
-  ]
+  ],
+  "orders": []
 }
