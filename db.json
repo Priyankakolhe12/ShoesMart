@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "name": "Priyanka Kolhe",
+      "email": "efg@g",
+      "password": "$2b$10$Xh1fqjYV/FKFxDin4bKx0.HTco8rYCk2tHpS2wr50wpPNa0ypli86",
+      "roleValue": "customer",
+      "kycStatus": "approved",
+      "id": 1,
+      "phone": "999999999",
+      "address": "At-khede"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "Nike Air Max",
+      "price": 4999,
+      "image": "https://via.placeholder.com/300"
+    },
+    {
+      "id": 2,
+      "name": "Adidas Runner",
+      "price": 3999,
+      "image": "https://via.placeholder.com/300"
+    }
+  ]
+}

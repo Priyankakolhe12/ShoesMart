@@ -6,6 +6,8 @@ import KycGuard from "./KycGuard";
 import KycForm from "../pages/KYC/KycForm";
 import KycStatus from "../pages/KYC/KycStatus";
 import ProductList from "../pages/Product/ProductList";
+import Cart from "../pages/Cart/Cart";
+import Layout from "../components/layout/Layout";
 
 export default function AppRouter() {
   return (
@@ -45,6 +47,28 @@ export default function AppRouter() {
           <AuthGuard>
             <KycGuard>
               <ProductList />
+            </KycGuard>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <AuthGuard>
+            <KycGuard>
+              <Cart />
+            </KycGuard>
+          </AuthGuard>
+        }
+      />
+      <Route
+        path="/"
+        element={
+          <AuthGuard>
+            <KycGuard>
+              <Layout>
+                <ProductList />
+              </Layout>
             </KycGuard>
           </AuthGuard>
         }
