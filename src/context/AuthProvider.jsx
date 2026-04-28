@@ -1,33 +1,73 @@
 import { AuthContext } from "./AuthContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { getUserByEmail, getUserById, createUser } from "../api/userApi";
+import axios from "axios";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // restore session
+  /* =============================
+     MAP USER
+  ============================= */
+  const mapUser = (data) => ({
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    role: data.role,
+    kyc: {
+      status: data?.kyc?.status ?? "not_started",
+      ...data?.kyc,
+    },
+  });
+
+  /* =============================
+     SET SESSION (SIMPLIFIED)
+  ============================= */
+  const setSession = (mappedUser) => {
+    localStorage.setItem("userId", mappedUser.id);
+    localStorage.setItem("userData", JSON.stringify(mappedUser));
+    setUser(mappedUser);
+  };
+
+  /* =============================
+     LOGOUT (SAFE)
+  ============================= */
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userData");
+  }, []);
+
+  /* =============================
+     RESTORE SESSION (FIXED)
+  ============================= */
   const me = async () => {
     try {
-      const id = sessionStorage.getItem("userId");
-      if (!id) return setLoading(false);
+      const id = localStorage.getItem("userId");
 
-      const found = await getUserById(id);
+      if (!id) {
+        setLoading(false);
+        return;
+      }
 
-      if (!found) return logout();
+      const cached = localStorage.getItem("userData");
 
-      setUser({
-        id: found.id,
-        name: found.name,
-        email: found.email,
-        role: found.roleValue,
-        kycStatus: found.kycStatus,
-      });
+      if (cached) {
+        setUser(JSON.parse(cached)); // instant UI restore
+      }
 
-      setAuthenticated(true);
-    } catch {
+      const fresh = await getUserById(Number(id));
+
+      if (!fresh) {
+        logout();
+        return;
+      }
+
+      setSession(mapUser(fresh)); // update fresh data
+    } catch (error) {
+      console.error("Session restore failed:", error);
       logout();
     } finally {
       setLoading(false);
@@ -38,72 +78,102 @@ export const AuthProvider = ({ children }) => {
     me();
   }, []);
 
-  //  LOGIN
-  const login = async (data) => {
-    const users = await getUserByEmail(data.email);
-    const found = users[0];
+  /* =============================
+     LOGIN (WITH KYC LOGIC)
+  ============================= */
+  const login = useCallback(async (data) => {
+    try {
+      const email = data.email.trim().toLowerCase();
 
-    if (!found) return { success: false, message: "Invalid credentials" };
+      const users = await getUserByEmail(email);
+      const found = users?.[0];
 
-    const match = await comparePassword(data.password, found.password);
+      if (!found) {
+        return { success: false, message: "Invalid credentials" };
+      }
 
-    if (!match) return { success: false, message: "Invalid credentials" };
+      const match = await comparePassword(data.password, found.password);
 
-    const safeUser = {
-      id: found.id,
-      name: found.name,
-      email: found.email,
-      role: found.roleValue,
-      kycStatus: found.kycStatus,
-    };
+      if (!match) {
+        return { success: false, message: "Invalid credentials" };
+      }
 
-    setUser(safeUser);
-    setAuthenticated(true);
-    sessionStorage.setItem("userId", found.id);
+      const mapped = mapUser(found);
+      setSession(mapped);
 
-    return { success: true, user: safeUser };
-  };
+      return {
+        success: true,
+        user: mapped,
+        kycStatus: mapped.kyc?.status,
+      };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, message: "Login failed" };
+    }
+  }, []);
 
-  //  REGISTER
-  const createProfile = async (data) => {
-    const users = await getUserByEmail(data.email);
+  /* =============================
+     REGISTER
+  ============================= */
+  const createProfile = useCallback(async (data) => {
+    try {
+      const email = data.email.trim().toLowerCase();
 
-    if (users.length > 0) {
-      return { success: false, message: "Email already exists" };
+      const users = await getUserByEmail(email);
+
+      if (users.length > 0) {
+        return { success: false, message: "Email already exists" };
+      }
+
+      const hashed = await hashPassword(data.password);
+
+      await createUser({
+        name: data.name.trim(),
+        email,
+        password: hashed,
+        role: "customer",
+        kyc: { status: null },
+        createdAt: new Date().toISOString(),
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Registration error:", error);
+      return { success: false, message: "Registration failed" };
+    }
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const id = localStorage.getItem("userId");
+      if (!id) return null;
+
+      const res = await axios.get(`/users/${id}`);
+
+      if (res?.data) {
+        const mapped = mapUser(res.data);
+        setSession(mapped);
+        return mapped;
+      }
+    } catch (err) {
+      console.error("Refresh user failed:", err);
     }
 
-    const hashed = await hashPassword(data.password);
+    return null;
+  }, []);
 
-    await createUser({
-      name: data.name,
-      email: data.email.toLowerCase(),
-      password: hashed,
-      roleValue: "customer",
-      kycStatus: null,
-    });
-
-    return { success: true };
-  };
-
-  // LOGOUT
-  const logout = () => {
-    setUser(null);
-    setAuthenticated(false);
-    sessionStorage.removeItem("userId");
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        createProfile,
-        authenticated,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      login,
+      logout,
+      createProfile,
+      refreshUser,
+      loading,
+      authenticated: !!user?.id,
+    }),
+    [user, loading, login, logout, createProfile, refreshUser],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

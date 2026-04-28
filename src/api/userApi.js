@@ -1,21 +1,16 @@
-import api from "./axios";
+import { getRequest, postRequest, patchRequest } from "./baseApi";
+import { API_ROUTES } from "./apiRoutes";
 
-export const getUserByEmail = async (email) => {
-  const res = await api.get(`/users?email=${email}`);
-  return res.data;
-};
+/* =============================
+   USERS
+============================= */
 
-export const getUserById = async (id) => {
-  const res = await api.get(`/users/${id}`);
-  return res.data;
-};
+export const getUserByEmail = (email) =>
+  getRequest(API_ROUTES.USERS, { params: { email } });
 
-export const createUser = async (data) => {
-  const res = await api.post("/users", data);
-  return res.data;
-};
+export const getUserById = (id) => getRequest(`${API_ROUTES.USERS}/${id}`);
 
-export const updateData = async (key, id, data) => {
-  const res = await api.patch(`/${key}/${id}`, data);
-  return res.data;
-};
+export const createUser = (data) => postRequest(API_ROUTES.USERS, data);
+
+export const updateUser = (id, data) =>
+  patchRequest(`${API_ROUTES.USERS}/${id}`, data);
