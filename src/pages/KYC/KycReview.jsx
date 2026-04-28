@@ -39,6 +39,7 @@ export default function KycReview() {
         preview = await convertToBase64(document.file);
       }
       const payload = {
+        ...user,
         kyc: {
           fullName: form.fullName,
           phone: form.phone,
@@ -64,7 +65,10 @@ export default function KycReview() {
         },
       };
       const res = await updateUser(user.id, payload);
-
+      if (!user?.id) {
+        console.error("User ID missing before KYC submit");
+        return;
+      }
       // ✅ ensure refresh finishes
       await refreshUser();
 

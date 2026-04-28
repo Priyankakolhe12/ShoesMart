@@ -2,7 +2,7 @@ import { AuthContext } from "./AuthContext";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { hashPassword, comparePassword } from "../utils/bcrypt";
 import { getUserByEmail, getUserById, createUser } from "../api/userApi";
-import axios from "axios";
+import api from "../api/axios";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
      SET SESSION (SIMPLIFIED)
   ============================= */
   const setSession = (mappedUser) => {
-    localStorage.setItem("userId", mappedUser.id);
+    localStorage.setItem("userId", String(mappedUser.id));
     localStorage.setItem("userData", JSON.stringify(mappedUser));
     setUser(mappedUser);
   };
@@ -148,7 +148,7 @@ export const AuthProvider = ({ children }) => {
       const id = localStorage.getItem("userId");
       if (!id) return null;
 
-      const res = await axios.get(`/users/${id}`);
+      const res = await api.get(`/users/${id}`);
 
       if (res?.data) {
         const mapped = mapUser(res.data);

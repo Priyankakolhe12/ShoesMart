@@ -131,12 +131,16 @@ export default function KycForm() {
       return;
     }
 
-    navigate("/kyc-review", {
-      state: {
-        form,
-        document: documents.idProof,
+    navigate(
+      "/kyc-review",
+      {
+        state: {
+          form,
+          document: documents.idProof,
+        },
       },
-    });
+      { replace: true },
+    );
   };
 
   return (
