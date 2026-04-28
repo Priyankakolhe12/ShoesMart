@@ -111,7 +111,7 @@
     {
       "name": "dddd",
       "email": "dddd@gmail.com",
-      "password": "$2b$10$h7hdYTqRq5/WrKMbJk372.IoNS/5D2W8GbOgTVOC.zlUpp3ThAvK2",
+      "password": "$2b$10$wA3NutaLA5SX6Ys./YXzmew377XSPCKB536OwNQ8f3Ox38gZ1C3py",
       "role": "customer",
       "kyc": {
         "fullName": "dddd",
@@ -127,12 +127,12 @@
         "country": "India",
         "docType": "aadhaar",
         "docNumber": "123456222222",
-        "documentName": "week8_report.pdf",
-        "documentPreview": "blob:http://localhost:5173/0aaf7e22-c95a-41ae-b836-cacdf11eedde",
-        "status": "approved",
-        "submittedAt": "2026-04-28T05:45:48.036Z"
+        "documentName": "week9_report.pdf",
+        "documentPreview": "blob:http://localhost:5174/4c82efd0-5148-458e-84c6-e872a549d9de",
+        "status": "pending",
+        "submittedAt": "2026-04-28T06:29:04.738Z"
       },
-      "createdAt": "2026-04-28T05:45:36.501Z",
+      "createdAt": "2026-04-28T06:28:28.879Z",
       "id": 7
     }
   ],
@@ -323,41 +323,6 @@
       },
       "status": "placed",
       "createdAt": "2026-04-14T12:23:36.437Z"
-    },
-    {
-      "id": 1777355218867,
-      "userId": 7,
-      "items": [
-        {
-          "id": 1,
-          "name": "Nike Air Max 270",
-          "price": 7999,
-          "qty": 1,
-          "stock": 10,
-          "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff"
-        },
-        {
-          "id": 2,
-          "name": "Adidas Ultraboost",
-          "price": 9999,
-          "qty": 1,
-          "stock": 8,
-          "image": "https://images.unsplash.com/photo-1528701800489-20be3c51c7df"
-        }
-      ],
-      "total": 18898,
-      "address": {
-        "name": "dddd",
-        "userId": null,
-        "address": "At-khede",
-        "city": "Nashik",
-        "state": "Maharashtra",
-        "zip": "422304",
-        "phone": "8888888888",
-        "payment": "cod"
-      },
-      "status": "placed",
-      "createdAt": "2026-04-28T05:46:58.867Z"
     }
   ]
 }

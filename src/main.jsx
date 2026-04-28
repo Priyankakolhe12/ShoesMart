@@ -20,14 +20,22 @@ let theme = createTheme({
 
     /* 🔥 PRIMARY (UPDATED) */
     primary: {
-      main: "#0f172a",
-      dark: "#020617",
-      light: "#334155",
+      lighter: "#D6E4FF",
+      light: "#84A9FF",
+      main: "#004297",
+      dark: "#00316F",
+      darker: "#001A4D",
+      contrastText: "#FFFFFF",
     },
 
     /* 🔥 SECONDARY (KEEP CLEAN DARK) */
     secondary: {
-      main: "#111827",
+      lighter: "#EFD6FF",
+      light: "#C684FF",
+      main: "#8E33FF",
+      dark: "#5119B7",
+      darker: "#27097A",
+      contrastText: "#FFFFFF",
     },
 
     /* BACKGROUND */
@@ -47,10 +55,28 @@ let theme = createTheme({
 
     /* OPTIONAL SUCCESS/ERROR (more realistic) */
     success: {
-      main: "#22c55e",
+      lighter: "#D3FCD2",
+      light: "#77ED8B",
+      main: "#22C55E",
+      dark: "#118D57",
+      darker: "#065E49",
+      contrastText: "#ffffff",
+    },
+
+    warning: {
+      lighter: "#FFF5CC",
+      light: "#FFD666",
+      main: "#FFAB00",
+      dark: "#B76E00",
+      darker: "#7A4100",
     },
     error: {
-      main: "#ef4444",
+      lighter: "#FFE9D5",
+      light: "#FFAC82",
+      main: "#FF5630",
+      dark: "#B71D18",
+      darker: "#7A0916",
+      contrastText: "#FFFFFF",
     },
   },
 
