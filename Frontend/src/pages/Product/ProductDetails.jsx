@@ -12,10 +12,11 @@ import {
   Grid,
 } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { getRequest } from "../../api/baseApi";
+import { useEffect, useState, useContext } from "react";
+import { getProductById } from "../../api/productApi";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice";
+import { AuthContext } from "../../context/AuthContext";
 import { useSnackbar } from "notistack";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -31,14 +32,17 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
 
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === "admin";
+
   useEffect(() => {
     fetchProduct();
   }, [id]);
 
   const fetchProduct = async () => {
     setLoading(true);
-    const data = await getRequest(`/products/${id}`);
-    setProduct(data);
+    const data = await getProductById(id);
+    setProduct(data?.product ?? null);
     setLoading(false);
   };
 
@@ -243,18 +247,32 @@ export default function ProductDetails() {
 
             {/* BUTTONS */}
             <Stack spacing={1.5}>
-              <Button
-                variant="contained"
-                size="large"
-                startIcon={<ShoppingCartIcon />}
-                onClick={handleAdd}
-                sx={{
-                  py: 1.4,
-                  borderRadius: 3,
-                }}
-              >
-                {adding ? "Adding..." : "Add to Cart"}
-              </Button>
+              {!isAdmin ? (
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<ShoppingCartIcon />}
+                  onClick={handleAdd}
+                  sx={{
+                    py: 1.4,
+                    borderRadius: 3,
+                  }}
+                >
+                  {adding ? "Adding..." : "Add to Cart"}
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  size="large"
+                  disabled
+                  sx={{
+                    py: 1.4,
+                    borderRadius: 3,
+                  }}
+                >
+                  Admin view only
+                </Button>
+              )}
             </Stack>
           </Stack>
         </Grid>

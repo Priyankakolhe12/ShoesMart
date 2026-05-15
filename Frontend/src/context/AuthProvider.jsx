@@ -1,8 +1,6 @@
 import { AuthContext } from "./AuthContext";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { hashPassword, comparePassword } from "../utils/bcrypt";
-import { getUserByEmail, getUserById, createUser } from "../api/userApi";
-import api from "../api/axios";
+import * as authApi from "../api/authApi";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -12,7 +10,7 @@ export const AuthProvider = ({ children }) => {
      MAP USER
   ============================= */
   const mapUser = (data) => ({
-    id: data.id,
+    id: data.id || data._id,
     name: data.name,
     email: data.email,
     role: data.role,
@@ -23,49 +21,60 @@ export const AuthProvider = ({ children }) => {
   });
 
   /* =============================
-     SET SESSION (SIMPLIFIED)
+     SET SESSION
   ============================= */
-  const setSession = (mappedUser) => {
+  const setSession = (mappedUser, token) => {
+    if (token) {
+      localStorage.setItem("token", token);
+    }
+
     localStorage.setItem("userId", String(mappedUser.id));
     localStorage.setItem("userData", JSON.stringify(mappedUser));
     setUser(mappedUser);
   };
 
   /* =============================
-     LOGOUT (SAFE)
+     LOGOUT
   ============================= */
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.warn("Logout failed on server:", error);
+    }
+
     setUser(null);
+    localStorage.removeItem("token");
     localStorage.removeItem("userId");
     localStorage.removeItem("userData");
   }, []);
 
   /* =============================
-     RESTORE SESSION (FIXED)
+     RESTORE SESSION
   ============================= */
   const me = async () => {
     try {
-      const id = localStorage.getItem("userId");
+      const token = localStorage.getItem("token");
 
-      if (!id) {
+      if (!token) {
         setLoading(false);
         return;
       }
 
       const cached = localStorage.getItem("userData");
-
       if (cached) {
-        setUser(JSON.parse(cached)); // instant UI restore
+        setUser(JSON.parse(cached));
       }
 
-      const fresh = await getUserById(Number(id));
+      const result = await authApi.getMe();
+      const fresh = result?.user;
 
       if (!fresh) {
         logout();
         return;
       }
 
-      setSession(mapUser(fresh)); // update fresh data
+      setSession(mapUser(fresh));
     } catch (error) {
       console.error("Session restore failed:", error);
       logout();
@@ -79,27 +88,27 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /* =============================
-     LOGIN (WITH KYC LOGIC)
+     LOGIN
   ============================= */
   const login = useCallback(async (data) => {
     try {
-      const email = data.email.trim().toLowerCase();
+      const response = await authApi.login({
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+      });
 
-      const users = await getUserByEmail(email);
-      const found = users?.[0];
+      const userData = response?.user;
+      const accessToken = response?.accessToken;
 
-      if (!found) {
-        return { success: false, message: "Invalid credentials" };
+      if (!userData || !accessToken) {
+        return {
+          success: false,
+          message: response?.message || "Invalid credentials",
+        };
       }
 
-      const match = await comparePassword(data.password, found.password);
-
-      if (!match) {
-        return { success: false, message: "Invalid credentials" };
-      }
-
-      const mapped = mapUser(found);
-      setSession(mapped);
+      const mapped = mapUser(userData);
+      setSession(mapped, accessToken);
 
       return {
         success: true,
@@ -108,7 +117,10 @@ export const AuthProvider = ({ children }) => {
       };
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, message: "Login failed" };
+      return {
+        success: false,
+        message: error?.message || "Login failed",
+      };
     }
   }, []);
 
@@ -117,41 +129,31 @@ export const AuthProvider = ({ children }) => {
   ============================= */
   const createProfile = useCallback(async (data) => {
     try {
-      const email = data.email.trim().toLowerCase();
-
-      const users = await getUserByEmail(email);
-
-      if (users.length > 0) {
-        return { success: false, message: "Email already exists" };
-      }
-
-      const hashed = await hashPassword(data.password);
-
-      await createUser({
+      await authApi.register({
         name: data.name.trim(),
-        email,
-        password: hashed,
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
         role: "customer",
-        kyc: { status: null },
-        createdAt: new Date().toISOString(),
       });
 
       return { success: true };
     } catch (error) {
       console.error("Registration error:", error);
-      return { success: false, message: "Registration failed" };
+      return {
+        success: false,
+        message:
+          error?.message || error?.data?.message || "Registration failed",
+      };
     }
   }, []);
 
   const refreshUser = useCallback(async () => {
     try {
-      const id = localStorage.getItem("userId");
-      if (!id) return null;
+      const result = await authApi.getMe();
+      const fresh = result?.user;
 
-      const res = await api.get(`/users/${id}`);
-
-      if (res?.data) {
-        const mapped = mapUser(res.data);
+      if (fresh) {
+        const mapped = mapUser(fresh);
         setSession(mapped);
         return mapped;
       }

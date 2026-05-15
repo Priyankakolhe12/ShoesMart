@@ -21,6 +21,9 @@ export default function KycReview() {
   const { user, refreshUser } = useContext(AuthContext);
   const { enqueueSnackbar } = useSnackbar();
 
+  const from = state?.from;
+  const reason = state?.reason;
+
   const [loading, setLoading] = useState(false);
 
   if (!state) {
@@ -77,7 +80,13 @@ export default function KycReview() {
       });
 
       setTimeout(() => {
-        navigate("/kyc-status", { replace: true });
+        navigate("/kyc-status", {
+          replace: true,
+          state: {
+            from,
+            reason,
+          },
+        });
       }, 50);
     } catch (err) {
       console.error("REAL ERROR:", err);
@@ -205,6 +214,8 @@ export default function KycReview() {
                     state: {
                       form: form,
                       document: document,
+                      from,
+                      reason,
                     },
                   })
                 }

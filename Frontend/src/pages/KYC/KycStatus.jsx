@@ -9,9 +9,9 @@ import {
   Alert,
 } from "@mui/material";
 
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -22,8 +22,10 @@ export default function KycStatus() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const location = useLocation();
   const kyc = user?.kyc || {};
   const status = kyc?.status ?? null;
+  const from = location.state?.from;
 
   const formatDate = (date) => (date ? new Date(date).toLocaleString() : "-");
 
@@ -78,6 +80,12 @@ export default function KycStatus() {
       </Typography>
     </Box>
   );
+
+  useEffect(() => {
+    if (from && status === "approved") {
+      navigate(from, { replace: true });
+    }
+  }, [from, status, navigate]);
 
   return (
     <Box display="flex" justifyContent="center" py={5} px={2}>

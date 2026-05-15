@@ -1,4 +1,5 @@
 import {
+  TextField,
   Box,
   Typography,
   Paper,
@@ -26,10 +27,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import { useForm, Controller } from "react-hook-form";
+import { postRequest } from "../../api/baseApi";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import TextField from "@mui/material/TextField";
+import { useForm, Controller } from "react-hook-form";
 
 /* =============================
    VALIDATION
@@ -97,25 +98,26 @@ export default function Checkout() {
 
       const order = {
         id: Date.now(),
-        userId: Number(user?.id),
-        items,
+        userId: user?.id,
+        items: items.map((item) => ({
+          productId: item.id,
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          stock: item.stock,
+          qty: item.qty,
+        })),
         total,
         address: data,
         status: "placed",
-        createdAt: new Date().toISOString(),
       };
 
-      /* ✅ SAVE TO JSON SERVER */
-      await fetch("http://localhost:5000/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(order),
-      });
+      /* ✅ SAVE TO BACKEND */
+      const createdOrder = await postRequest("/orders", order);
 
       dispatch(clearCart());
-      navigate("/order-success", { state: { order } });
+      navigate("/order-success", { state: { order: createdOrder } });
     } finally {
       setLoading(false);
     }
@@ -134,7 +136,7 @@ export default function Checkout() {
     <Fade in timeout={400}>
       <Grid container spacing={4}>
         {/* LEFT */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid item xs={12} md={8}>
           <Stack spacing={3}>
             {/* ADDRESS */}
             <Paper
@@ -158,7 +160,7 @@ export default function Checkout() {
                   { name: "zip", label: "ZIP Code" },
                   { name: "phone", label: "Phone" },
                 ].map((field) => (
-                  <Grid key={field.name} size={{ xs: field.xs || 6 }}>
+                  <Grid item key={field.name} xs={field.xs || 6}>
                     <Controller
                       name={field.name}
                       control={control}
@@ -278,7 +280,7 @@ export default function Checkout() {
         </Grid>
 
         {/* RIGHT */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid item xs={12} md={4}>
           <Paper
             sx={{
               p: 3,

@@ -5,16 +5,19 @@ import PageLoader from "../components/common/PageLoader";
 
 import AuthGuard from "./AuthGuard";
 import KycGuard from "./KycGuard";
+import CustomerGuard from "./CustomerGuard";
 import PublicGuard from "./PublicGuard";
 import Layout from "../components/layout/Layout";
 
 /* ADMIN */
 import AdminPanel from "../pages/Admin/AdminPanel";
+import AddProduct from "../pages/Admin/AddProduct";
 
 /* LAZY */
 const Login = lazy(() => import("../pages/Auth/Login"));
 const Register = lazy(() => import("../pages/Auth/Register"));
 const ForgotPassword = lazy(() => import("../pages/Auth/ForgotPassword"));
+const VerifyEmail = lazy(() => import("../pages/Auth/VerifyEmail"));
 
 const KycForm = lazy(() => import("../pages/KYC/KycForm"));
 const KycStatus = lazy(() => import("../pages/KYC/KycStatus"));
@@ -52,6 +55,7 @@ export default function AppRouter() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
         </Route>
 
         {/* =============================
@@ -65,14 +69,18 @@ export default function AppRouter() {
 
           {/* AUTH REQUIRED */}
           <Route element={<AuthGuard />}>
-            <Route path="/kyc" element={<KycForm />} />
-            <Route path="/kyc-status" element={<KycStatus />} />
-            <Route path="/kyc-review" element={<KycReview />} />
+            <Route element={<CustomerGuard />}>
+              <Route path="/kyc" element={<KycForm />} />
+              <Route path="/kyc-status" element={<KycStatus />} />
+              <Route path="/kyc-review" element={<KycReview />} />
+            </Route>
 
             {/* AUTH + KYC */}
-            <Route element={<KycGuard />}>
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/orders" element={<OrderHistory />} />
+            <Route element={<CustomerGuard />}>
+              <Route element={<KycGuard />}>
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/orders" element={<OrderHistory />} />
+              </Route>
               <Route path="/order-success" element={<OrderSuccess />} />
             </Route>
           </Route>
@@ -80,6 +88,7 @@ export default function AppRouter() {
           {/* ADMIN */}
           <Route element={<AuthGuard requiredRole="admin" />}>
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/add-product" element={<AddProduct />} />
           </Route>
         </Route>
 

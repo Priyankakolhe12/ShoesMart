@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         "Please fill a valid email address",
       ],
       unique: [true, "Email already exists"],
@@ -37,6 +37,83 @@ const userSchema = new mongoose.Schema(
     verified: {
       type: Boolean,
       default: false,
+    },
+    kyc: {
+      status: {
+        type: String,
+        enum: ["not_started", "pending", "approved", "rejected"],
+        default: "not_started",
+      },
+      fullName: {
+        type: String,
+        default: "",
+      },
+      phone: {
+        type: String,
+        default: "",
+      },
+      gender: {
+        type: String,
+        default: "",
+      },
+      dob: {
+        type: String,
+        default: "",
+      },
+      occupation: {
+        type: String,
+        default: "",
+      },
+      address1: {
+        type: String,
+        default: "",
+      },
+      address2: {
+        type: String,
+        default: "",
+      },
+      city: {
+        type: String,
+        default: "",
+      },
+      state: {
+        type: String,
+        default: "",
+      },
+      zip: {
+        type: String,
+        default: "",
+      },
+      country: {
+        type: String,
+        default: "",
+      },
+      docType: {
+        type: String,
+        default: "",
+      },
+      docNumber: {
+        type: String,
+        default: "",
+      },
+      documentName: {
+        type: String,
+        default: "",
+      },
+      documentPreview: {
+        type: String,
+        default: "",
+      },
+      submittedAt: {
+        type: Date,
+      },
+      reviewedAt: {
+        type: Date,
+      },
+      reason: {
+        type: String,
+        default: "",
+      },
     },
   },
   {

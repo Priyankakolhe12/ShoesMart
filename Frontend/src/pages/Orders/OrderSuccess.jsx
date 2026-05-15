@@ -108,7 +108,9 @@ export default function OrderSuccess() {
                   Date
                 </Typography>
                 <Typography fontWeight={600}>
-                  {new Date(order.createdAt).toLocaleDateString()}
+                  {order.createdAt
+                    ? new Date(order.createdAt).toLocaleDateString()
+                    : new Date().toLocaleDateString()}
                 </Typography>
               </Box>
             </Stack>

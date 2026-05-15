@@ -23,6 +23,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import HomeIcon from "@mui/icons-material/Home";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import AddIcon from "@mui/icons-material/Add";
 
 import { useSelector } from "react-redux";
 import { selectCartCount } from "../../redux/slices/cartSlice";
@@ -52,10 +53,18 @@ export default function Topbar() {
 
   const navItems = [
     { label: "Home", path: "/", icon: <HomeIcon /> },
-    { label: "Orders", path: "/orders", icon: <ShoppingBagIcon /> },
+    ...(user?.role === "admin"
+      ? [
+          { label: "Dashboard", path: "/admin", icon: <VerifiedUserIcon /> },
+          { label: "Add Product", path: "/admin/add-product", icon: <AddIcon /> },
+        ]
+      : [{ label: "Orders", path: "/orders", icon: <ShoppingBagIcon /> }]),
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === "/") return location.pathname === "/";
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <>
@@ -147,7 +156,7 @@ export default function Topbar() {
           {/* RIGHT */}
           <Box display="flex" alignItems="center" gap={1.5}>
             {/* KYC */}
-            {user && (
+            {user?.role !== "admin" && (
               <Chip
                 label={
                   kycStatus === "approved"
@@ -170,11 +179,13 @@ export default function Topbar() {
             )}
 
             {/* CART */}
-            <IconButton onClick={() => navigate("/cart")}>
-              <Badge badgeContent={cartCount || 0} color="error">
-                <ShoppingCartIcon />
-              </Badge>
-            </IconButton>
+            {user?.role !== "admin" && (
+              <IconButton onClick={() => navigate("/cart")}>
+                <Badge badgeContent={cartCount || 0} color="error">
+                  <ShoppingCartIcon />
+                </Badge>
+              </IconButton>
+            )}
 
             {/* USER */}
             {user ? (
@@ -212,13 +223,17 @@ export default function Topbar() {
 
                   <Divider />
 
-                  <MenuItem onClick={() => navigate("/orders")}>
-                    My Orders
-                  </MenuItem>
+                  {user?.role !== "admin" && (
+                    <MenuItem onClick={() => navigate("/orders")}>
+                      My Orders
+                    </MenuItem>
+                  )}
 
-                  <MenuItem onClick={() => navigate("/kyc-status")}>
-                    KYC Status
-                  </MenuItem>
+                  {user?.role !== "admin" && (
+                    <MenuItem onClick={() => navigate("/kyc-status")}>
+                      KYC Status
+                    </MenuItem>
+                  )}
 
                   <MenuItem onClick={handleLogout}>Logout</MenuItem>
                 </Menu>
@@ -290,7 +305,7 @@ export default function Topbar() {
               </ListItemButton>
             ))}
 
-            {user && (
+            {user?.role !== "admin" && (
               <ListItemButton
                 onClick={() => navigate("/kyc-status")}
                 sx={{ borderRadius: 2 }}

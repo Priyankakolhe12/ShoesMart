@@ -1,6 +1,7 @@
 export const API_ROUTES = {
-  USERS: "/users",
-  PRODUCTS: "/products",
+  AUTH: "/api/auth",
+  USERS: "/api/users",
+  PRODUCTS: "/api/products",
   CART: "/cart",
   ORDERS: "/orders",
 };

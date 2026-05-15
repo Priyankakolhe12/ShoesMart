@@ -23,7 +23,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "@mui/material/styles";
 
 import ProductCard from "./ProductCard";
-import { getRequest } from "../../api/baseApi";
+import { getAllProducts } from "../../api/productApi";
 
 export default function ProductList() {
   const theme = useTheme();
@@ -55,7 +55,7 @@ export default function ProductList() {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const data = await getRequest("/products");
+    const data = await getAllProducts();
     setProducts(data);
     setLoading(false);
   };

@@ -63,6 +63,14 @@ export default function Login() {
       enqueueSnackbar(res.message || "Invalid credentials", {
         variant: "error",
       });
+
+      if (res.message?.toLowerCase().includes("not verified")) {
+        navigate("/verify-email", {
+          state: { email: data.email.toLowerCase() },
+          replace: true,
+        });
+      }
+
       return;
     }
 

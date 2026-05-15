@@ -33,6 +33,13 @@ export default function KycGuard() {
   }
 
   /* =============================
+     🚫 ADMIN RESTRICTION
+  ============================= */
+  if (user.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  /* =============================
      🔍 SAFE STATUS EXTRACTION
   ============================= */
   if (!user || !user.id) {

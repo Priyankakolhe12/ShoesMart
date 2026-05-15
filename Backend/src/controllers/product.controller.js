@@ -16,6 +16,16 @@ async function createProduct(req, res) {
       return res.status(400).json({ message: "Image file is required" });
     }
 
+    const size = Array.isArray(data.size)
+      ? data.size.map(Number)
+      : data.size
+        ? data.size
+            .toString()
+            .split(",")
+            .map((value) => Number(value.trim()))
+            .filter(Boolean)
+        : [];
+
     await productModel.create({
       name: data.name,
       price: data.price,
@@ -24,7 +34,7 @@ async function createProduct(req, res) {
       type: data.type,
       brand: data.brand,
       description: data.description,
-      size: data.size,
+      size,
       image: image,
       stock: data.stock,
       rating: data.rating,
@@ -73,6 +83,29 @@ async function getProductById(req, res) {
 async function updateProduct(req, res) {
   try {
     const data = req.body;
+    const existingProduct = await productModel.findById(req.params.id);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let image = existingProduct.image;
+    if (req.files && req.files.image && req.files.image[0]) {
+      const result = await cloudinary.uploader.upload(req.files.image[0].path, {
+        folder: "shoesmart/products",
+      });
+      image = result.secure_url;
+    }
+
+    const size = Array.isArray(data.size)
+      ? data.size.map(Number)
+      : data.size
+        ? data.size
+            .toString()
+            .split(",")
+            .map((value) => Number(value.trim()))
+            .filter(Boolean)
+        : existingProduct.size;
+
     const product = await productModel.findByIdAndUpdate(
       req.params.id,
       {
@@ -83,7 +116,8 @@ async function updateProduct(req, res) {
         type: data.type,
         brand: data.brand,
         description: data.description,
-        size: data.size,
+        size,
+        image: image,
         stock: data.stock,
         rating: data.rating,
         tag: data.tag,

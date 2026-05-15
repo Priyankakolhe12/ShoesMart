@@ -1,16 +1,25 @@
 const express = require("express");
 const authRouter = require("./routes/auth.routes");
+const userRouter = require("./routes/user.routes");
+const productRouter = require("./routes/product.routes");
+const orderRouter = require("./routes/order.routes");
 const cookieParser = require("cookie-parser");
-// const userModel = require("./models/user.model");
-// const productModel = require("./models/product.model");
 const cors = require("cors");
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/auth", authRouter);
-app.use("/api/products", require("./routes/product.routes"));
+app.use("/api/users", userRouter);
+app.use("/api/products", productRouter);
+app.use("/api/orders", orderRouter);
+app.use("/orders", orderRouter);
 
 app.get("/", (req, res) => {
   res.status(200).json({

@@ -10,7 +10,11 @@ router.post(
 );
 router.get("/get-all", productController.getAllProducts);
 router.get("/get/:id", productController.getProductById);
-router.patch("/update/:id", productController.updateProduct);
+router.patch(
+  "/update/:id",
+  upload.fields([{ name: "image", maxCount: 1 }]),
+  productController.updateProduct,
+);
 router.delete("/delete/:id", productController.deleteProduct);
 
 module.exports = router;

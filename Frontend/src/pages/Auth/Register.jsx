@@ -31,7 +31,7 @@ const schema = yup.object({
     .required("Email is required"),
   password: yup
     .string()
-    .min(6, "Minimum 6 characters")
+    .min(8, "Minimum 8 characters")
     .matches(
       /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/,
       "Must include uppercase, lowercase, number",
@@ -79,32 +79,14 @@ export default function Register() {
         return;
       }
 
-      const loginRes = await login({
-        email: data.email.toLowerCase(),
-        password: data.password,
-      });
-
-      if (!loginRes.success) {
-        enqueueSnackbar("Login after registration failed", {
-          variant: "warning",
-        });
-        navigate("/login");
-        return;
-      }
-
-      enqueueSnackbar("Account created 🎉", {
+      enqueueSnackbar("Account created 🎉 Check your email for OTP verification.", {
         variant: "success",
       });
 
-      const kycStatus = loginRes.kycStatus;
-
-      if (!kycStatus || kycStatus === "rejected") {
-        navigate("/kyc", { replace: true });
-      } else if (kycStatus === "pending") {
-        navigate("/kyc-status", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+      navigate("/verify-email", {
+        replace: true,
+        state: { email: data.email.toLowerCase() },
+      });
     } catch {
       enqueueSnackbar("Something went wrong", {
         variant: "error",

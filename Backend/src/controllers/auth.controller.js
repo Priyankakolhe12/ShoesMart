@@ -25,6 +25,7 @@ async function registerUser(req, res) {
     email: data.email,
     password: data.password,
     role: data.role,
+    kyc: { status: "not_started" },
   });
 
   // const refreshToken = jwt.sign(
@@ -76,7 +77,6 @@ async function registerUser(req, res) {
     user: {
       name: user.name,
       email: user.email,
-      password: user.password,
       verified: user.verified,
     },
     // accessToken,
@@ -94,11 +94,12 @@ const loginUser = async (req, res) => {
     });
   }
 
-  if (!user.verified) {
+  if (user.role !== "admin" && !user.verified) {
     return res.status(403).json({
       message: "Account not verified. Please check your email for the OTP.",
     });
   }
+
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     return res.status(401).json({
@@ -129,14 +130,21 @@ const loginUser = async (req, res) => {
 
   res.cookie("refreshtoken", refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: "strict",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.status(200).json({
     message: "Login successful",
-    user,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      verified: user.verified,
+      kyc: user.kyc,
+    },
     accessToken,
   });
 };
@@ -230,51 +238,53 @@ const refreshToken = async (req, res) => {
     });
   }
 
-  jwt.verify(refreshToken, config.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({
-        message: "Unauthorized",
-      });
-    }
-    const refreshTokenHash = bcrypt.hashSync(refreshToken, 10);
-
-    const session = sessionModel.findOne({
-      refreshTokenHash,
-      revoked: false,
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, config.JWT_SECRET);
+  } catch (error) {
+    return res.status(401).json({
+      message: "Unauthorized",
     });
+  }
 
-    if (!session) {
-      return res.status(401).json({
-        message: "Invalid refresh token",
-      });
-    }
+  const session = await sessionModel.findOne({
+    userId: decoded.id,
+    revoked: false,
+  });
 
-    const accessToken = jwt.sign(
-      { id: decoded.id, role: decoded.role },
-      config.JWT_SECRET,
-      { expiresIn: "15m" },
-    );
-
-    const newRefreshToken = jwt.sign(
-      { id: decoded.id, role: decoded.role },
-      config.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
-
-    const newRefreshTokenHash = bcrypt.hashSync(newRefreshToken, 10);
-
-    session.refreshTokenHash = newRefreshTokenHash;
-    session.save();
-    res.cookie("refreshtoken", newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  if (
+    !session ||
+    !(await bcrypt.compare(refreshToken, session.refreshTokenHash))
+  ) {
+    return res.status(401).json({
+      message: "Invalid refresh token",
     });
+  }
 
-    res.status(200).json({
-      accessToken,
-    });
+  const accessToken = jwt.sign(
+    { id: decoded.id, role: decoded.role },
+    config.JWT_SECRET,
+    { expiresIn: "15m" },
+  );
+
+  const newRefreshToken = jwt.sign(
+    { id: decoded.id, role: decoded.role },
+    config.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+
+  session.refreshTokenHash = await bcrypt.hash(newRefreshToken, 10);
+  await session.save();
+
+  res.cookie("refreshtoken", newRefreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  res.status(200).json({
+    accessToken,
   });
 };
 
@@ -286,14 +296,24 @@ const logout = async (req, res) => {
     });
   }
 
-  const refreshTokenHash = await bcrypt.hash(refreshToken, 10);
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, config.JWT_SECRET);
+  } catch (error) {
+    return res.status(400).json({
+      message: "Invalid refresh token",
+    });
+  }
 
   const session = await sessionModel.findOne({
-    refreshTokenHash,
+    userId: decoded.id,
     revoked: false,
   });
 
-  if (!session) {
+  if (
+    !session ||
+    !(await bcrypt.compare(refreshToken, session.refreshTokenHash))
+  ) {
     return res.status(400).json({
       message: "Invalid refresh token",
     });

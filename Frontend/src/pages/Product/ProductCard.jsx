@@ -16,13 +16,17 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
+import { deleteProduct } from "../../api/productApi";
 
 export default function ProductCard({ product }) {
   const id = product.id;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.role === "admin";
   const [adding, setAdding] = useState(false);
 
   const formatPrice = (price) =>
@@ -48,6 +52,25 @@ export default function ProductCard({ product }) {
       enqueueSnackbar("Added to cart 🛒", { variant: "success" });
       setAdding(false);
     }, 300);
+  };
+
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        await deleteProduct(id);
+        enqueueSnackbar("Product deleted", { variant: "success" });
+        // Optionally, trigger a refresh or remove from list
+        window.location.reload(); // Simple refresh for now
+      } catch {
+        enqueueSnackbar("Failed to delete product", { variant: "error" });
+      }
+    }
+  };
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    navigate(`/admin/add-product?edit=${id}`);
   };
 
   return (
@@ -216,22 +239,54 @@ export default function ProductCard({ product }) {
           </Box>
 
           {/* PRICE */}
-          <Typography fontWeight={700} fontSize={18}>
-            {formatPrice(product.price)}
-          </Typography>
+          <Box>
+            <Typography fontWeight={700} fontSize={18}>
+              {formatPrice(product.price)}
+            </Typography>
+            {product.originalPrice > product.price && (
+              <Typography
+                color="text.secondary"
+                fontSize={12}
+                sx={{ textDecoration: "line-through" }}
+              >
+                {formatPrice(product.originalPrice)}
+              </Typography>
+            )}
+          </Box>
         </Stack>
 
         {/* BUTTON */}
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={handleAdd}
-          disabled={product.stock === 0 || adding}
-          startIcon={<ShoppingCartIcon />}
-          sx={{ mt: 2 }}
-        >
-          {adding ? "Adding..." : "Add to Cart"}
-        </Button>
+        {!isAdmin ? (
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleAdd}
+            disabled={product.stock === 0 || adding}
+            startIcon={<ShoppingCartIcon />}
+            sx={{ mt: 2 }}
+          >
+            {adding ? "Adding..." : "Add to Cart"}
+          </Button>
+        ) : (
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              color="primary"
+              onClick={handleEdit}
+            >
+              Edit
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              color="error"
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          </Stack>
+        )}
       </CardContent>
     </Card>
   );
